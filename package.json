@@ -1,0 +1,31 @@
+{
+  "name": "romis-mern",
+  "version": "1.0.0",
+  "description": "Romis-Mern app",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon --exec babel-node src/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/World-Charity-Tour/romis-MERN.git"
+  },
+  "keywords": [
+    "romis"
+  ],
+  "author": "Sirri Celles <sirricelles@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/World-Charity-Tour/romis-MERN/issues"
+  },
+  "homepage": "https://github.com/World-Charity-Tour/romis-MERN#readme",
+  "devDependencies": {
+    "@babel/core": "^7.18.13",
+    "@babel/node": "^7.18.10",
+    "nodemon": "^2.0.19"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.2"
+  }
+}
