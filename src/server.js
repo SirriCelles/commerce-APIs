@@ -1,4 +1,10 @@
+const dotenv = require('dotenv');
+const app = require('./app');
 
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+dotenv.config({path: './../.env'});
+
+const port = process.env.PORT || 8000;
+
+app.listen(port, () => {
+  console.log(`Romis app listening on port ${port}...`);
+});
