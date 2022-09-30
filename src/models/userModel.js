@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema(
   {
@@ -35,7 +36,13 @@ const userSchema = new mongoose.Schema(
     confirmedPassword: {
       type: String,
       required: [true, 'Please confirm your password'],
-      minlength: 8,
+      validate: {
+        // Only works on Save() and create() .Note Use save() or create() for updating user information.
+        validator: function (el) {
+          return el === this.password;
+        },
+        message: 'Password mismatch. Please try again',
+      },
     },
     // favourites: [
     //   {
@@ -47,6 +54,14 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+
+  this.password = await bcrypt.hash(this.password, 12);
+  this.confirmedPassword = undefined;
+  next();
+});
 
 const User = mongoose.model('User', userSchema);
 
