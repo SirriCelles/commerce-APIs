@@ -32,6 +32,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Password is required'],
       minlength: 8,
+      select: false,
     },
     confirmedPassword: {
       type: String,
@@ -62,6 +63,12 @@ userSchema.pre('save', async function (next) {
   this.confirmedPassword = undefined;
   next();
 });
+
+// Check password hash with DB password hash
+// Instance method works on all documents of a certain Schema
+userSchema.methods.correctPassword = async function (userPassword, dbpassword) {
+  return await bcrypt.compare(userPassword, dbpassword);
+};
 
 const User = mongoose.model('User', userSchema);
 
