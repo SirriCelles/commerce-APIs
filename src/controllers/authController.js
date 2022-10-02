@@ -21,6 +21,7 @@ exports.signup = catchAsync(async (req, res, next) => {
   });
 
   const token = generateToken(user._id);
+  user.password = undefined;
   res.status(201).json({
     status: 'success',
     data: {
@@ -46,15 +47,13 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError('Incorrect email or password!', 401));
   }
-  const newUser = { ...user };
-  newUser.delete('password');
-
   // Send token
   const token = generateToken(user._id);
+  user.password = undefined;
   res.status(200).json({
     status: 'success',
     data: {
-      user: newUser,
+      user: user,
       token: {
         accessToken: token,
         expiresIn: expiresIn,
@@ -75,14 +74,13 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   if (!token) {
-    return next(new AppError('unauthorized access, please log in first', 401));
+    return next(new AppError('Unauthorized access, please log in first', 401));
   }
   // Validate/verify  the token
   const decocodedPayload = await promisify(jwt.verify)(
     token,
     process.env.JWT_SECRET
   );
-  console.log(decocodedPayload);
 
   // check if user still exists,
   const user = await User.findById(decocodedPayload.id);
