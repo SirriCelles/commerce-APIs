@@ -45,6 +45,7 @@ const userSchema = new mongoose.Schema(
         message: 'Password mismatch. Please try again',
       },
     },
+    passwordChangedAt: Date,
     // favourites: [
     //   {
     //     type: String,
@@ -68,6 +69,18 @@ userSchema.pre('save', async function (next) {
 // Instance method works on all documents of a certain Schema
 userSchema.methods.correctPassword = async function (userPassword, dbpassword) {
   return await bcrypt.compare(userPassword, dbpassword);
+};
+
+userSchema.methods.changedPassword = async function (jwtTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+
+    return jwtTimestamp < changedTimestamp;
+  }
+  // return false;
 };
 
 const User = mongoose.model('User', userSchema);
