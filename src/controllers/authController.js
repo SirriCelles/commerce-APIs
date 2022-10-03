@@ -99,7 +99,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   next();
 });
 
-// authirzation middleware, roles.
+// authirzation middleware, roles. accepts roles array and checks if user has this role.
 exports.restrictTo =
   (...roles) =>
   (req, res, next) => {
@@ -115,3 +115,24 @@ exports.restrictTo =
 
     next();
   };
+
+exports.forgotPassword = catchAsync(async (req, res, next) => {
+  // get user form rerquest.email
+  const user = await User.findOne({ email: req.body.email });
+  if (!user)
+    return next(
+      new AppError(
+        `User not found! There is no user with email ${req.body.email}`
+      )
+    );
+
+  // Generate radom token
+  const resetToken = user.createPasswordResetToken();
+
+  // Deactivated validated fieilds
+  await user.save({ validateBeforeSave: false });
+
+  // Send to user email address
+});
+
+exports.resetPassword = (req, res, next) => {};

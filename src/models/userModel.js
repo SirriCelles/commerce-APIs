@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 const userSchema = new mongoose.Schema(
   {
@@ -51,6 +52,8 @@ const userSchema = new mongoose.Schema(
       },
     },
     passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
     // favourites: [
     //   {
     //     type: String,
@@ -86,6 +89,19 @@ userSchema.methods.changedPassword = async function (jwtTimestamp) {
     return jwtTimestamp < changedTimestamp;
   }
   // return false;
+};
+
+// Create an instance method for forgot password.
+userSchema.methods.createPasswordResetToken = function () {
+  // random string but not to strong
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.passwordResetToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex');
+
+  this.passwordResetExpires = Date.now() + 60 * 60 * 1000;
+  return resetToken;
 };
 
 const User = mongoose.model('User', userSchema);
