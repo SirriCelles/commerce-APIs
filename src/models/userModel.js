@@ -73,6 +73,13 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+// create passwordUpdatedAt function
+userSchema.pre('save', async function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
 // Check password hash with DB password hash
 // Instance method works on all documents of a certain Schema
 userSchema.methods.correctPassword = async function (userPassword, dbpassword) {
@@ -80,6 +87,7 @@ userSchema.methods.correctPassword = async function (userPassword, dbpassword) {
 };
 
 userSchema.methods.changedPassword = async function (jwtTimestamp) {
+  console.log(this.passwordChangedAt);
   if (this.passwordChangedAt) {
     const changedTimestamp = parseInt(
       this.passwordChangedAt.getTime() / 1000,

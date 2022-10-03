@@ -10,6 +10,21 @@ const expiresIn = process.env.JWT_EXPIRES_IN;
 const generateToken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: expiresIn });
 
+const sendTokenRes = (user, statusCode, res) => {
+  const token = generateToken(user._id);
+  user.password = undefined;
+  res.status(statusCode).json({
+    status: 'success',
+    data: {
+      user,
+      token: {
+        accessToken: token,
+        expiresIn: expiresIn,
+      },
+    },
+  });
+};
+
 exports.signup = catchAsync(async (req, res, next) => {
   // User cannot input a role
   const user = await User.create({
@@ -22,18 +37,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     DoB: req.body.DoB,
   });
 
-  const token = generateToken(user._id);
-  user.password = undefined;
-  res.status(201).json({
-    status: 'success',
-    data: {
-      user,
-      token: {
-        accessToken: token,
-        expiresIn: expiresIn,
-      },
-    },
-  });
+  sendTokenRes(user, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -50,18 +54,7 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Incorrect email or password!', 401));
   }
   // Send token
-  const token = generateToken(user._id);
-  user.password = undefined;
-  res.status(200).json({
-    status: 'success',
-    data: {
-      user: user,
-      token: {
-        accessToken: token,
-        expiresIn: expiresIn,
-      },
-    },
-  });
+  sendTokenRes(user, 200, res);
 });
 
 // middleware
@@ -90,8 +83,10 @@ exports.protect = catchAsync(async (req, res, next) => {
     return next(new AppError('The user for this token was not found', 400));
   }
 
-  // check if user chnaged password after the jwt was issued
-  if (user.changedPassword(decocodedPayload.iat)) {
+  // check if user changed password after the jwt was issued
+  console.log(user.passwordChangedAt, decocodedPayload.iat);
+  if (!user.changedPassword(decocodedPayload.iat)) {
+    console.log(user.passwordChangedAt, decocodedPayload.iat);
     return next(
       new AppError('Your password was changed. Please log In again.', 401)
     );
@@ -194,16 +189,22 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   // Update the changedPasswordAt property for the user
   // Log in user
-  const token = generateToken(user._id);
-  user.password = undefined;
-  res.status(200).json({
-    status: 'success',
-    data: {
-      user: user,
-      token: {
-        accessToken: token,
-        expiresIn: expiresIn,
-      },
-    },
-  });
+  sendTokenRes(user, 200, res);
+});
+
+exports.changePassword = catchAsync(async (req, res, next) => {
+  // get user from collectioon
+  const user = await User.findById(req.user.id).select('+password');
+
+  // check if current password is correect
+  if (!(await user.correctPassword(req.body.currentPassword, user.password)))
+    return next(new AppError('Your current password is incorrect', 401));
+
+  // update current password with new password
+  user.password = req.body.password;
+  user.confirmedPassword = req.body.confirmedPassword;
+  await user.save();
+
+  // Login User
+  sendTokenRes(user, 200, res);
 });
