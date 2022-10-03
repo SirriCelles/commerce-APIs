@@ -84,9 +84,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // check if user changed password after the jwt was issued
-  console.log(user.passwordChangedAt, decocodedPayload.iat);
   if (!user.changedPassword(decocodedPayload.iat)) {
-    console.log(user.passwordChangedAt, decocodedPayload.iat);
     return next(
       new AppError('Your password was changed. Please log In again.', 401)
     );
